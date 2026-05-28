@@ -161,6 +161,9 @@ async fn one_shot(config: Config, command: &str) {
             Err(e) => { eprintln!("\n❌ {}", e); break; }
         };
 
+        // Collect tool calls for parallel execution
+        let mut pending_tools: Vec<(String, String, serde_json::Value)> = Vec::new();
+
         for event in &events {
             match event {
                 StreamEvent::Thinking(text) => {
@@ -179,18 +182,47 @@ async fn one_shot(config: Config, command: &str) {
                     let args: serde_json::Value = serde_json::from_str(arguments).unwrap_or_default();
                     let args_summary = format_tool_args(&args);
                     eprintln!("\n  ⚡ {}({})", name, args_summary);
-                    let tool_result = if mcp.is_mcp_tool(name) {
-                        mcp.execute_tool(name, &args).await.unwrap_or_else(|e| format!("MCP Error: {}", e))
-                    } else {
-                        tools::execute_tool(name, &args)
-                    };
-                    client.add_tool_result(id.clone(), tool_result);
+                    pending_tools.push((id.clone(), name.clone(), args));
                 }
                 StreamEvent::AssistantMessage(msg) => {
                     client.messages.push(msg.clone());
                 }
                 StreamEvent::Error(msg) => eprintln!("\n❌ {}", msg),
                 StreamEvent::Done => {}
+            }
+        }
+
+        // Execute all tool calls — local tools in parallel, MCP tools sequential
+        if !pending_tools.is_empty() {
+            let mut local_tools: Vec<(String, String, serde_json::Value)> = Vec::new();
+            let mut mcp_tools: Vec<(String, String, serde_json::Value)> = Vec::new();
+            for (id, name, args) in &pending_tools {
+                if mcp.is_mcp_tool(name) {
+                    mcp_tools.push((id.clone(), name.clone(), args.clone()));
+                } else {
+                    local_tools.push((id.clone(), name.clone(), args.clone()));
+                }
+            }
+
+            // Local tools in parallel via spawn_blocking
+            if !local_tools.is_empty() {
+                let handles: Vec<_> = local_tools.into_iter().map(|(id, name, args)| {
+                    tokio::task::spawn_blocking(move || {
+                        let result = tools::execute_tool(&name, &args);
+                        (id, result)
+                    })
+                }).collect();
+                for h in handles {
+                    if let Ok((id, result)) = h.await {
+                        client.add_tool_result(id, result);
+                    }
+                }
+            }
+
+            // MCP tools sequential
+            for (id, name, args) in &mcp_tools {
+                let result = mcp.execute_tool(name, args).await.unwrap_or_else(|e| format!("MCP Error: {}", e));
+                client.add_tool_result(id.clone(), result);
             }
         }
 
@@ -278,6 +310,9 @@ async fn simple_interactive_with_client(mut client: MiMoClient, mcp: mcp::McpCli
                 Err(e) => { eprintln!("\n❌ {}", e); break; }
             };
 
+            // Collect tool calls for parallel execution
+            let mut pending_tools: Vec<(String, String, serde_json::Value)> = Vec::new();
+
             for event in &events {
                 match event {
                     StreamEvent::Thinking(text) => {
@@ -296,34 +331,72 @@ async fn simple_interactive_with_client(mut client: MiMoClient, mcp: mcp::McpCli
                         let args: serde_json::Value = serde_json::from_str(arguments).unwrap_or_default();
                         let args_summary = format_tool_args(&args);
                         eprintln!("\n  ⚡ {}({})", name, args_summary);
-                        let tool_result = if mcp.is_mcp_tool(name) {
-                            mcp.execute_tool(name, &args).await.unwrap_or_else(|e| format!("MCP Error: {}", e))
-                        } else {
-                            tools::execute_tool(name, &args)
-                        };
-                        client.add_tool_result(id.clone(), tool_result.clone());
-
-                        // LSP check after file edits
-                        if name == "write_file" || name == "edit_file" {
-                            if let Some(path) = args.get("path").and_then(|v| v.as_str()) {
-                                if let Ok(diags) = lsp::quick_check(std::path::Path::new(path)) {
-                                    for d in &diags {
-                                        eprintln!("  {}", d);
-                                    }
-                                }
-                            }
-                        }
-
-                        // Git snapshot after tool execution
-                        if git.is_git_repo() {
-                            let _ = git.snapshot(&format!("tool:{}", name));
-                        }
+                        pending_tools.push((id.clone(), name.clone(), args));
                     }
                     StreamEvent::AssistantMessage(msg) => {
                         client.messages.push(msg.clone());
                     }
                     StreamEvent::Error(msg) => eprintln!("\n❌ {}", msg),
                     StreamEvent::Done => {}
+                }
+            }
+
+            // Execute all tool calls — local tools in parallel, MCP tools sequential
+            if !pending_tools.is_empty() {
+                // Split into local and MCP tools
+                let mut local_tools: Vec<(String, String, serde_json::Value)> = Vec::new();
+                let mut mcp_tools: Vec<(String, String, serde_json::Value)> = Vec::new();
+                for (id, name, args) in &pending_tools {
+                    if mcp.is_mcp_tool(name) {
+                        mcp_tools.push((id.clone(), name.clone(), args.clone()));
+                    } else {
+                        local_tools.push((id.clone(), name.clone(), args.clone()));
+                    }
+                }
+
+                // Execute local tools in parallel via spawn_blocking
+                let local_results: Vec<(String, String, serde_json::Value, String)> = if !local_tools.is_empty() {
+                    let handles: Vec<_> = local_tools.into_iter().map(|(id, name, args)| {
+                        tokio::task::spawn_blocking(move || {
+                            let result = tools::execute_tool(&name, &args);
+                            (id, name, args, result)
+                        })
+                    }).collect();
+                    let mut results = Vec::new();
+                    for h in handles {
+                        if let Ok(r) = h.await { results.push(r); }
+                    }
+                    results
+                } else {
+                    Vec::new()
+                };
+
+                // Execute MCP tools sequentially (they're async)
+                let mut mcp_results: Vec<(String, String, serde_json::Value, String)> = Vec::new();
+                for (id, name, args) in &mcp_tools {
+                    let result = mcp.execute_tool(name, args).await.unwrap_or_else(|e| format!("MCP Error: {}", e));
+                    mcp_results.push((id.clone(), name.clone(), args.clone(), result));
+                }
+
+                // Combine and add results
+                for (id, name, args, tool_result) in local_results.into_iter().chain(mcp_results) {
+                    client.add_tool_result(id, tool_result.clone());
+
+                    // LSP check after file edits
+                    if name == "write_file" || name == "edit_file" {
+                        if let Some(path) = args.get("path").and_then(|v| v.as_str()) {
+                            if let Ok(diags) = lsp::quick_check(std::path::Path::new(path)) {
+                                for d in &diags {
+                                    eprintln!("  {}", d);
+                                }
+                            }
+                        }
+                    }
+
+                    // Git snapshot after tool execution
+                    if git.is_git_repo() {
+                        let _ = git.snapshot(&format!("tool:{}", name));
+                    }
                 }
             }
 
