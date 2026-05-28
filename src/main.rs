@@ -531,20 +531,25 @@ async fn run_subagents(task_str: &str, _client: &MiMoClient, _git: &git::GitOps)
 
 fn print_banner() {
     let version = env!("CARGO_PKG_VERSION");
+    let o = "\x1b[38;5;208m"; // Xiaomi orange
+    let w = "\x1b[38;5;208;1m"; // Bold orange for MI text
+    let r = "\x1b[0m";
     println!();
-    println!("  \x1b[38;5;208;1m             ╭───────────────────────╮");
-    println!("             │                       │");
-    println!("             │   ███╗   ███╗ ██╗    │");
-    println!("             │   ████╗ ████║ ██║    │");
-    println!("             │   ██╔████╔██║ ██║    │");
-    println!("             │   ██║╚██╔╝██║ ██║    │");
-    println!("             │   ██║ ╚═╝ ██║ ██║    │");
-    println!("             │   ╚═╝     ╚═╝ ╚═╝    │");
-    println!("             │                       │");
-    println!("             ╰───────────────────────╯");
-    println!("\x1b[0m");
+    println!("  {o}          ╔══════════════════════════════╗{r}");
+    println!("  {o}        ╔╝                                ╚╗{r}");
+    println!("  {o}       ║                                    ║{r}");
+    println!("  {o}       ║   {w}██╗   ██╗{r}{o}  {w}██╗{r}{o}                ║{r}");
+    println!("  {o}       ║   {w}███╗ ████║{r}{o}  {w}██║{r}{o}               ║{r}");
+    println!("  {o}       ║   {w}██╔████╔██║{r}{o}  {w}██║{r}{o}              ║{r}");
+    println!("  {o}       ║   {w}██║╚██╔╝██║{r}{o}  {w}██║{r}{o}              ║{r}");
+    println!("  {o}       ║   {w}██║ ╚═╝ ██║{r}{o}  {w}██║{r}{o}              ║{r}");
+    println!("  {o}       ║   {w}╚═╝     ╚═╝{r}{o}  {w}╚═╝{r}{o}              ║{r}");
+    println!("  {o}       ║                                    ║{r}");
+    println!("  {o}        ╚╗                                ╔╝{r}");
+    println!("  {o}          ╚══════════════════════════════╝{r}");
+    println!();
     println!("  \x1b[1;36mMiMo TUI\x1b[0m  \x1b[90mv{}\x1b[0m  \x1b[90m━━━━━━━━━━━━━━━━━━━━━━━━━\x1b[0m", version);
-    println!("  \x1b[1m🐋  Terminal Coding Agent\x1b[0m");
+    println!("  \x1b[1mTerminal Coding Agent\x1b[0m");
     println!("  \x1b[90mPowered by Xiaomi MiMo · Written in Rust\x1b[0m");
     println!();
     println!("  \x1b[90m/help for commands · /quit to exit · /config to reconfigure\x1b[0m");
