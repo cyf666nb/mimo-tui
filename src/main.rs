@@ -199,8 +199,14 @@ async fn one_shot(config: Config, command: &str) {
 
     if thinking_active { eprintln!(); }
     if content_active { println!(); }
+    let total_cache = client.total_cache_hit_tokens + client.total_cache_miss_tokens;
+    let cache_pct = if total_cache > 0 { client.total_cache_hit_tokens as f64 / total_cache as f64 * 100.0 } else { 0.0 };
     eprintln!("\nTokens — input: {} | output: {} | reasoning: {}",
         client.total_input_tokens, client.total_output_tokens, client.total_reasoning_tokens);
+    if total_cache > 0 {
+        eprintln!("Cache  — hit: {} | miss: {} | rate: {:.1}%",
+            client.total_cache_hit_tokens, client.total_cache_miss_tokens, cache_pct);
+    }
 }
 
 async fn resume_session(config: Config, session_id: &str) {
@@ -376,8 +382,18 @@ async fn handle_command(cmd: &str, client: &mut MiMoClient, git: &git::GitOps, m
             println!("Cleared.");
         }
         "/tokens" => {
+            let total_cache = client.total_cache_hit_tokens + client.total_cache_miss_tokens;
+            let cache_pct = if total_cache > 0 {
+                client.total_cache_hit_tokens as f64 / total_cache as f64 * 100.0
+            } else {
+                0.0
+            };
             println!("Tokens — input: {} | output: {} | reasoning: {}",
                 client.total_input_tokens, client.total_output_tokens, client.total_reasoning_tokens);
+            if total_cache > 0 {
+                println!("Cache  — hit: {} | miss: {} | rate: {:.1}%",
+                    client.total_cache_hit_tokens, client.total_cache_miss_tokens, cache_pct);
+            }
         }
         "/save" => {
             let session = session::Session::new(

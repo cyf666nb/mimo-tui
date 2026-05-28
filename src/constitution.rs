@@ -1,39 +1,32 @@
-pub fn get_system_prompt(permission_mode: &str, extra: &str) -> String {
+/// Stable system prompt — NEVER changes across requests (maximizes prefix cache hits).
+/// Mode-specific instructions are injected separately via get_mode_instruction().
+pub fn get_system_prompt(_permission_mode: &str, extra: &str) -> String {
     let mut prompt = CONSTITUTION.to_string();
-
-    match permission_mode {
-        "plan" => {
-            prompt.push_str(
-                "\n## Mode: PLAN (Read-Only)\n\n\
-                 You are in Plan mode. You may ONLY read files, search code, and analyze the codebase.\n\
-                 You MUST NOT edit, write, or delete any files. You MUST NOT run shell commands that modify state.\n\
-                 Your goal is to understand the problem and present a clear plan for the user to approve.\n",
-            );
-        }
-        "yolo" => {
-            prompt.push_str(
-                "\n## Mode: YOLO (Full Autonomy)\n\n\
-                 You are in YOLO mode. Execute immediately without asking for confirmation.\n\
-                 Make reasonable assumptions and proceed on low-risk work.\n\
-                 Still avoid truly destructive actions (rm -rf, DROP TABLE, etc.) — those always need confirmation.\n",
-            );
-        }
-        _ => {
-            // agent mode (default)
-            prompt.push_str(
-                "\n## Mode: AGENT (Approval Required)\n\n\
-                 You are in Agent mode. You can read, write, edit files, and run shell commands.\n\
-                 Destructive operations (file deletion, git force push, database mutations) require user approval.\n\
-                 Present the operation clearly and wait for confirmation before proceeding.\n",
-            );
-        }
-    }
 
     if !extra.is_empty() {
         prompt.push_str(&format!("\n## User Instructions\n\n{}\n", extra));
     }
 
     prompt
+}
+
+/// Mode-specific instruction — injected as a separate message AFTER the conversation history
+/// so it doesn't break the prefix cache when switching modes.
+pub fn get_mode_instruction(permission_mode: &str) -> &'static str {
+    match permission_mode {
+        "plan" => "## Mode: PLAN (Read-Only)\n\n\
+            You are in Plan mode. You may ONLY read files, search code, and analyze the codebase.\n\
+            You MUST NOT edit, write, or delete any files. You MUST NOT run shell commands that modify state.\n\
+            Your goal is to understand the problem and present a clear plan for the user to approve.",
+        "yolo" => "## Mode: YOLO (Full Autonomy)\n\n\
+            You are in YOLO mode. Execute immediately without asking for confirmation.\n\
+            Make reasonable assumptions and proceed on low-risk work.\n\
+            Still avoid truly destructive actions (rm -rf, DROP TABLE, etc.) — those always need confirmation.",
+        _ => "## Mode: AGENT (Approval Required)\n\n\
+            You are in Agent mode. You can read, write, edit files, and run shell commands.\n\
+            Destructive operations (file deletion, git force push, database mutations) require user approval.\n\
+            Present the operation clearly and wait for confirmation before proceeding.",
+    }
 }
 
 const CONSTITUTION: &str = r#"# MiMo TUI — Terminal Coding Agent

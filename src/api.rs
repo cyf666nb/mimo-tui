@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 
 use crate::config::Config;
-use crate::constitution::get_system_prompt;
+use crate::constitution::{get_system_prompt, get_mode_instruction};
 use crate::tools::get_tool_schemas;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -27,6 +27,8 @@ pub struct MiMoClient {
     pub total_input_tokens: u64,
     pub total_output_tokens: u64,
     pub total_reasoning_tokens: u64,
+    pub total_cache_hit_tokens: u64,
+    pub total_cache_miss_tokens: u64,
     pub extra_tools: Vec<Value>,
     pub http: reqwest::Client,
 }
@@ -54,6 +56,8 @@ impl MiMoClient {
             total_input_tokens: 0,
             total_output_tokens: 0,
             total_reasoning_tokens: 0,
+            total_cache_hit_tokens: 0,
+            total_cache_miss_tokens: 0,
             extra_tools: Vec::new(),
             http,
         }
@@ -64,6 +68,8 @@ impl MiMoClient {
         self.total_input_tokens = 0;
         self.total_output_tokens = 0;
         self.total_reasoning_tokens = 0;
+        self.total_cache_hit_tokens = 0;
+        self.total_cache_miss_tokens = 0;
     }
 
     pub fn add_system_prompt(&mut self) {
@@ -122,7 +128,21 @@ impl MiMoClient {
     fn build_request(&self) -> Value {
         let mut tools = get_tool_schemas(self.config.web_search);
         tools.extend(self.extra_tools.iter().cloned());
-        let messages: Vec<Value> = self.messages.iter().map(|m| {
+
+        // Build messages array with mode instruction injected before last user message
+        // This maximizes prefix cache hits: system prompt + history stays stable,
+        // only the mode instruction changes when switching modes.
+        let mut messages: Vec<Value> = Vec::new();
+        let mode_inst = get_mode_instruction(&self.config.permission_mode);
+
+        for (i, m) in self.messages.iter().enumerate() {
+            // Inject mode instruction as system message before the LAST user message
+            if m.role == "user" && i == self.messages.len() - 1 {
+                messages.push(json!({
+                    "role": "system",
+                    "content": mode_inst
+                }));
+            }
             let mut msg = json!({ "role": m.role });
             if let Some(ref content) = m.content {
                 msg["content"] = json!(content);
@@ -136,8 +156,8 @@ impl MiMoClient {
             if let Some(ref tid) = m.tool_call_id {
                 msg["tool_call_id"] = json!(tid);
             }
-            msg
-        }).collect();
+            messages.push(msg);
+        }
 
         // thinking goes in extra_body (MiMo API requirement)
         let thinking = if self.config.thinking {
@@ -190,6 +210,13 @@ impl MiMoClient {
                             }
                             if let Some(ct) = usage.get("completion_tokens").and_then(|v| v.as_u64()) {
                                 self.total_output_tokens += ct;
+                            }
+                            // DeepSeek / MiMo cache hit tracking
+                            if let Some(cht) = usage.get("prompt_cache_hit_tokens").and_then(|v| v.as_u64()) {
+                                self.total_cache_hit_tokens += cht;
+                            }
+                            if let Some(cmt) = usage.get("prompt_cache_miss_tokens").and_then(|v| v.as_u64()) {
+                                self.total_cache_miss_tokens += cmt;
                             }
                         }
 
