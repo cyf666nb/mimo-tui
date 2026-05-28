@@ -92,6 +92,7 @@ impl Session {
         Ok(sessions)
     }
 
+    #[allow(dead_code)]
     pub fn delete(id: &str) -> Result<()> {
         let path = Self::sessions_dir().join(format!("{}.json", id));
         if path.exists() {

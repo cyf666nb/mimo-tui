@@ -79,7 +79,7 @@ impl GitOps {
             .current_dir(&self.side_git_dir)
             .output()?;
 
-        let output = Command::new("git")
+        let _output = Command::new("git")
             .args(["commit", "-m", label, "--allow-empty"])
             .current_dir(&self.side_git_dir)
             .output()?;
@@ -108,6 +108,7 @@ impl GitOps {
     }
 
     /// Restore a snapshot by hash
+    #[allow(dead_code)]
     pub fn restore(&self, hash: &str) -> Result<()> {
         Command::new("git")
             .args(["checkout", hash, "--", "."])

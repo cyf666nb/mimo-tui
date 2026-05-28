@@ -5,7 +5,7 @@ use crate::config::Config;
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
-use std::path::PathBuf;
+use std::path::Path;
 use std::sync::Arc;
 use tokio::sync::{mpsc, Mutex, Semaphore};
 
@@ -34,7 +34,7 @@ pub struct SubAgentResult {
 pub async fn run_parallel(
     config: &Config,
     tasks: Vec<SubAgentTask>,
-    workdir: &PathBuf,
+    workdir: &Path,
     progress_tx: mpsc::Sender<(String, String)>,
 ) -> Vec<SubAgentResult> {
     let semaphore = Arc::new(Semaphore::new(MAX_CONCURRENT));
@@ -45,7 +45,7 @@ pub async fn run_parallel(
         let sem = semaphore.clone();
         let config = config.clone();
         let tools = crate::tools::get_tool_schemas(config.web_search);
-        let workdir = workdir.clone();
+        let workdir = workdir.to_path_buf();
         let progress = progress_tx.clone();
         let results = results.clone();
 
@@ -73,7 +73,7 @@ pub async fn run_parallel(
 async fn run_single(
     config: &Config,
     tools: &[Value],
-    workdir: &PathBuf,
+    workdir: &Path,
     task: &SubAgentTask,
 ) -> SubAgentResult {
     let task_id = task.id.clone();
@@ -92,7 +92,7 @@ async fn run_single(
 async fn run_single_inner(
     config: &Config,
     tools: &[Value],
-    workdir: &PathBuf,
+    workdir: &Path,
     task: &SubAgentTask,
 ) -> Result<SubAgentResult> {
     let client = reqwest::Client::new();

@@ -2,7 +2,7 @@ mod api;
  mod config;
  mod constitution;
  mod git;
- mod highlight;
+mod highlight;
  mod lsp;
  mod session;
  mod mcp;

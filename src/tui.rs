@@ -15,7 +15,7 @@ use std::io;
 use std::time::Duration;
 use tokio::sync::mpsc;
 
-use crate::api::{Message, MiMoClient, StreamEvent};
+use crate::api::{MiMoClient, StreamEvent};
 use crate::config::Config;
 
 #[derive(Debug, Clone)]

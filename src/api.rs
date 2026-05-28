@@ -290,8 +290,8 @@ impl MiMoClient {
 }
 
 pub struct TurnResult {
-    pub content: String,
+    #[allow(dead_code)] pub content: String,
     pub has_tool_calls: bool,
-    pub tool_calls: Vec<Value>,
+    #[allow(dead_code)] pub tool_calls: Vec<Value>,
     pub assistant_message: Message,
 }

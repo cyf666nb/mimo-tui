@@ -18,7 +18,8 @@ pub fn detect_language(path: &Path) -> Option<&'static str> {
     }
 }
 
-/// Get the LSP command for a language
+/// Build the LSP server command for a language
+#[allow(dead_code)]
 pub fn lsp_command(lang: &str) -> Option<(&'static str, Vec<&'static str>)> {
     match lang {
         "rust" => Some(("rust-analyzer", vec![])),
@@ -30,7 +31,8 @@ pub fn lsp_command(lang: &str) -> Option<(&'static str, Vec<&'static str>)> {
     }
 }
 
-/// Check if an LSP server is available for a given language
+/// Check if an LSP server is available for a language
+#[allow(dead_code)]
 pub fn lsp_available(lang: &str) -> bool {
     if let Some((cmd, _)) = lsp_command(lang) {
         which::which(cmd).is_ok()
@@ -137,7 +139,7 @@ pub struct Diagnostic {
 pub enum Severity {
     Error,
     Warning,
-    Info,
+    #[allow(dead_code)] Info,
 }
 
 impl std::fmt::Display for Diagnostic {

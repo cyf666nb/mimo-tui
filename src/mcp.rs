@@ -194,7 +194,7 @@ impl McpClient {
             }
         });
 
-        let mut server = McpServer {
+        let server = McpServer {
             name: name.to_string(),
             writer_tx,
             pending: pending.clone(),
@@ -283,6 +283,7 @@ impl McpClient {
     }
 
     /// Check if a specific MCP tool exists
+    #[allow(dead_code)]
     pub fn has_tool(&self, name: &str) -> bool {
         self.tools.iter().any(|t| format!("mcp__{}__{}", t.server_name, t.name) == name)
     }

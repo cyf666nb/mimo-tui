@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 /// Syntax highlighting for code blocks in the TUI.
 use ratatui::style::{Color, Style};
 use ratatui::text::{Line, Span};
@@ -80,12 +81,12 @@ pub fn parse_markdown(text: &str) -> Vec<MdBlock> {
             code_lines.clear();
         } else if in_code {
             code_lines.push(line.to_string());
-        } else if line.starts_with("# ") {
-            blocks.push(MdBlock::Heading(line[2..].to_string(), 1));
-        } else if line.starts_with("## ") {
-            blocks.push(MdBlock::Heading(line[3..].to_string(), 2));
-        } else if line.starts_with("### ") {
-            blocks.push(MdBlock::Heading(line[4..].to_string(), 3));
+        } else if let Some(rest) = line.strip_prefix("# ") {
+            blocks.push(MdBlock::Heading(rest.to_string(), 1));
+        } else if let Some(rest) = line.strip_prefix("## ") {
+            blocks.push(MdBlock::Heading(rest.to_string(), 2));
+        } else if let Some(rest) = line.strip_prefix("### ") {
+            blocks.push(MdBlock::Heading(rest.to_string(), 3));
         } else if line.starts_with("- ") || line.starts_with("* ") {
             blocks.push(MdBlock::Bullet(line[2..].to_string()));
         } else if line.starts_with("| ") && line.contains(" | ") {
