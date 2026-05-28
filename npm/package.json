@@ -1,0 +1,30 @@
+{
+  "name": "mimo-tui",
+  "version": "0.2.0",
+  "description": "Terminal coding agent for Xiaomi MiMo — fast, lightweight, with TUI, MCP, and sub-agents",
+  "keywords": ["terminal", "ai", "coding-agent", "tui", "mimo", "llm", "coding"],
+  "homepage": "https://github.com/nousresearch/mimo-tui-rs",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nousresearch/mimo-tui-rs.git"
+  },
+  "license": "MIT",
+  "author": "Nous Research",
+  "bin": {
+    "mimo-tui": "bin/mimo-tui"
+  },
+  "files": [
+    "bin/",
+    "postinstall.js",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "postinstall": "node postinstall.js"
+  },
+  "os": ["darwin", "linux", "win32"],
+  "cpu": ["x64", "arm64"],
+  "engines": {
+    "node": ">=16"
+  }
+}

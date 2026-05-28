@@ -1,0 +1,42 @@
+[package]
+name = "mimo-tui"
+version = "0.2.0"
+edition = "2021"
+rust-version = "1.75"
+description = "Terminal coding agent for Xiaomi MiMo — fast, lightweight, with TUI, MCP, and sub-agents"
+license = "MIT"
+repository = "https://github.com/nousresearch/mimo-tui-rs"
+homepage = "https://github.com/nousresearch/mimo-tui-rs"
+readme = "README.md"
+keywords = ["terminal", "ai", "coding-agent", "tui", "mimo"]
+categories = ["command-line-utilities", "development-tools"]
+authors = ["Nous Research"] 
+
+[dependencies]
+clap = { version = "4", features = ["derive"] }
+tokio = { version = "1", features = ["full"] }
+reqwest = { version = "0.12", features = ["json", "stream", "rustls-tls"], default-features = false }
+reqwest-eventsource = "0.6"
+futures = "0.3"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+ratatui = "0.29"
+crossterm = { version = "0.28", features = ["event-stream"] }
+console = "0.15"
+textwrap = "0.16"
+dirs = "6"
+walkdir = "2"
+toml = "0.8"
+anyhow = "1"
+chrono = "0.4"
+regex = "1"
+uuid = { version = "1", features = ["v4"] }
+# New for CodeWhale parity
+syntect = { version = "5", default-features = false, features = ["default-fancy"] }
+which = "7"
+tokio-util = "0.7" 
+
+[profile.release]
+opt-level = 3
+lto = true
+strip = true
