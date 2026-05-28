@@ -1,4 +1,5 @@
 mod api;
+mod setup;
  mod config;
  mod constitution;
  mod git;
@@ -63,6 +64,22 @@ struct Cli {
 #[tokio::main]
 async fn main() {
     let cli = Cli::parse();
+
+    // First-run setup wizard
+    if setup::needs_setup() {
+        let config = setup::run_setup();
+        // Launch directly after setup
+        if let Some(command) = cli.command {
+            one_shot(config, &command).await;
+        } else if cli.simple {
+            simple_interactive(config).await;
+        } else {
+            if let Err(e) = tui::run_tui(config).await {
+                eprintln!("TUI error: {}", e);
+            }
+        }
+        return;
+    }
 
     let mut config = Config::load();
 
@@ -437,6 +454,12 @@ Tools:");
                 }
             }
         }
+        "/config" | "/setup" => {
+            let new_config = setup::run_setup();
+            *client = MiMoClient::new(new_config);
+            client.add_system_prompt();
+            println!("Config updated!");
+        }
         "/quit" | "/exit" => {
             println!("Bye! 🐋");
             std::process::exit(0);
@@ -541,6 +564,7 @@ Commands:
   /snapshots             List git snapshots
   /git                   Show git status
   /agent <tasks>         Spawn parallel sub-agents (use | to separate tasks)
+  /config                Re-run setup wizard
   /quit                  Exit
 
 Shortcuts (TUI mode):
