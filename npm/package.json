@@ -1,8 +1,16 @@
 {
-  "name": "mimo-code",
+  "name": "@cyf666nb/mimo-code",
   "version": "0.2.0",
-  "description": "Terminal coding agent for Xiaomi MiMo — fast, lightweight, with TUI, MCP, and sub-agents",
-  "keywords": ["terminal", "ai", "coding-agent", "tui", "mimo", "llm", "coding"],
+  "description": "Terminal coding agent for Xiaomi MiMo \u2014 fast, lightweight, with TUI, MCP, and sub-agents",
+  "keywords": [
+    "terminal",
+    "ai",
+    "coding-agent",
+    "tui",
+    "mimo",
+    "llm",
+    "coding"
+  ],
   "homepage": "https://github.com/cyf666nb/mimo-tui",
   "repository": {
     "type": "git",
@@ -22,8 +30,15 @@
   "scripts": {
     "postinstall": "node postinstall.js"
   },
-  "os": ["darwin", "linux", "win32"],
-  "cpu": ["x64", "arm64"],
+  "os": [
+    "darwin",
+    "linux",
+    "win32"
+  ],
+  "cpu": [
+    "x64",
+    "arm64"
+  ],
   "engines": {
     "node": ">=16"
   }
