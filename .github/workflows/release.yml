@@ -82,7 +82,19 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           registry-url: 'https://registry.npmjs.org'
+      - name: Check if version already published
+        id: check
+        run: |
+          cd npm
+          VERSION=$(node -p "require('./package.json').version")
+          if npm view @cyf666nb/mimo-code@$VERSION version 2>/dev/null; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+            echo "Version $VERSION already published, skipping."
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
       - name: Publish
+        if: steps.check.outputs.exists != 'true'
         run: |
           cd npm
           npm publish --access=public
