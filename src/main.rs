@@ -530,15 +530,32 @@ async fn run_subagents(task_str: &str, _client: &MiMoClient, _git: &git::GitOps)
 }
 
 fn print_banner() {
-    println!(r#"
-╭──────────────────────────────────────────────────╮
-│                                                  │
-│   🐋  MiMo TUI  —  Terminal Coding Agent        │
-│                                                  │
-│   Powered by Xiaomi MiMo (Rust)                  │
-│   /help for commands │ /quit to exit             │
-│                                                  │
-╰──────────────────────────────────────────────────╯"#);
+    let version = env!("CARGO_PKG_VERSION");
+    println!();
+    println!("  \x1b[36m                  .:~!!~:.");
+    println!("               .:?YPGBGPPY?:.");
+    println!("             :?YPGB####BGPY?:");
+    println!("           :?YPGB########BGPY?:");
+    println!("         :?YPGB##BBBBBBB##BGPY?:");
+    println!("       :?YPGB#BGGGGGGGGGGB#BGPY?:");
+    println!("      :YPGB#BGGGGGGGGGGGGGB#BGPY:");
+    println!("     :YPG#BGGGGGGGGGGGGGGGGGB#GPY:");
+    println!("    :YPG#BGGGGGGGGGGGGGGGGGGGB#GPY:");
+    println!("    :YPG#BGGGGGGGGGGGGGGGGGGGB#GPY:");
+    println!("     :YPGB#BGGGGGGGGGGGGGGGGB#BGPY:");
+    println!("      :?YPGB#BGGGGGGGGGGGGGB#BGPY?:");
+    println!("        :?YPGB##BBBBBBBBB##BGPY?:");
+    println!("          :?YPGB##########BGPY?:");
+    println!("            :?YPGB######BGPY?:");
+    println!("              .:?YPGBGPY?:.");
+    println!("                 .:~!!~:.");
+    println!("\x1b[0m");
+    println!("  \x1b[1;36mMiMo TUI\x1b[0m  \x1b[90mv{}\x1b[0m  \x1b[90m━━━━━━━━━━━━━━━━━━━━━━━━━\x1b[0m", version);
+    println!("  \x1b[1m🐋  Terminal Coding Agent\x1b[0m");
+    println!("  \x1b[90mPowered by Xiaomi MiMo · Written in Rust\x1b[0m");
+    println!();
+    println!("  \x1b[90m/help for commands · /quit to exit · /config to reconfigure\x1b[0m");
+    println!();
 }
 
 fn mode_prompt(mode: &str) -> &'static str {

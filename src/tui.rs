@@ -51,7 +51,7 @@ impl App {
         Self {
             config,
             messages: vec![ChatMessage::System(
-                "Welcome to MiMo TUI! Type a message to start.\nTab: expand thinking | Ctrl+C: quit | Ctrl+L: clear".into()
+                format!("  🐋  MiMo TUI v{}\n\n  Ready to code. Type a message or paste code to start.\n\n  /help for commands · Tab: expand thinking · Ctrl+C: quit", env!("CARGO_PKG_VERSION"))
             )],
             input: String::new(),
             cursor_position: 0,
