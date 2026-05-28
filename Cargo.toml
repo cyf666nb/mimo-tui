@@ -1,6 +1,6 @@
 [package]
 name = "mimo-tui"
-version = "0.3.1"
+version = "0.3.2"
 edition = "2021"
 rust-version = "1.75"
 description = "Terminal coding agent for Xiaomi MiMo — fast, lightweight, with TUI, MCP, and sub-agents"

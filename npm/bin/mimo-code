@@ -10,7 +10,7 @@ const binPath = path.join(__dirname, binName);
 
 if (!fs.existsSync(binPath)) {
   console.error(`mimo-tui: binary not found at ${binPath}`);
-  console.error(`Run 'npm install mimo-tui' to download it.`);
+  console.error(`Run 'npm install @cyf666nb/mimo-code' to download it.`);
   console.error(`Or install from source: cargo install mimo-tui`);
   process.exit(1);
 }

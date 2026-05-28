@@ -1,6 +1,6 @@
 {
   "name": "@cyf666nb/mimo-code",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "Terminal coding agent for Xiaomi MiMo — fast, lightweight, with TUI, MCP, and sub-agents",
   "keywords": [
     "terminal",
@@ -19,7 +19,8 @@
   "license": "MIT",
   "author": "Nous Research",
   "bin": {
-    "mimo-code": "bin/mimo-tui"
+    "mimo-code": "bin/mimo-code",
+    "mimo-tui": "bin/mimo-code"
   },
   "files": [
     "bin/",
