@@ -458,13 +458,14 @@ mod tests {
         // Should not start with ~ (tilde expanded)
         assert!(!s.starts_with("~"), "Tilde not expanded: {}", s);
         // Should be an absolute path
-        assert!(s.starts_with("/"), "Should be absolute: {}", s);
+        assert!(expanded.is_absolute(), "Should be absolute: {}", s);
     }
 
     #[test]
     fn test_expand_path_absolute() {
-        let expanded = expand_path("/tmp/test");
-        assert_eq!(expanded, std::path::PathBuf::from("/tmp/test"));
+        let tmp = std::env::temp_dir().join("test");
+        let expanded = expand_path(&tmp.display().to_string());
+        assert_eq!(expanded, tmp);
     }
 
     #[test]
@@ -505,18 +506,18 @@ mod tests {
     #[test]
     fn test_read_file_basic() {
         // Create a temp file
-        let path = "/tmp/mimo_test_read.txt";
-        std::fs::write(path, "line1\nline2\nline3").unwrap();
-        let args = serde_json::json!({"path": path});
+        let path = std::env::temp_dir().join("mimo_test_read.txt");
+        std::fs::write(&path, "line1\nline2\nline3").unwrap();
+        let args = serde_json::json!({"path": path.display().to_string()});
         let result = execute_tool("read_file", &args);
         assert!(result.contains("line1"));
         assert!(result.contains("line2"));
-        std::fs::remove_file(path).ok();
+        std::fs::remove_file(&path).ok();
     }
 
     #[test]
     fn test_write_and_read() {
-        let path = "/tmp/mimo_test_write.txt";
+        let path = std::env::temp_dir().join("mimo_test_write.txt").display().to_string();
         let write_args = serde_json::json!({"path": path, "content": "test content"});
         let write_result = execute_tool("write_file", &write_args);
         assert!(write_result.contains("Wrote"));

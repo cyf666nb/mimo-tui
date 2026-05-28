@@ -5,9 +5,10 @@ const https = require("https");
 const fs = require("fs");
 const path = require("path");
 const zlib = require("zlib");
+const { execSync } = require("child_process");
 
 const VERSION = require("./package.json").version;
-const REPO = "nousresearch/mimo-tui-rs";
+const REPO = "cyf666nb/mimo-tui";
 
 const PLATFORM_MAP = {
   "darwin": "apple-darwin",
@@ -41,7 +42,9 @@ function getBinName() {
 }
 
 function getDownloadUrl(target) {
-  // GitHub release URL pattern
+  if (process.platform === "win32") {
+    return `https://github.com/${REPO}/releases/download/v${VERSION}/mimo-tui-${target}.exe.zip`;
+  }
   return `https://github.com/${REPO}/releases/download/v${VERSION}/mimo-tui-${target}.tar.gz`;
 }
 
@@ -66,13 +69,10 @@ function download(url) {
   });
 }
 
-async function extract(buffer, destPath) {
+function extractTarGz(buffer, destPath) {
   const decompressed = zlib.gunzipSync(buffer);
-  // tar extraction — find the binary
-  // Simple tar parser for the binary file
   let offset = 0;
   while (offset < decompressed.length) {
-    // tar header is 512 bytes
     if (offset + 512 > decompressed.length) break;
 
     const name = decompressed.toString("utf8", offset, offset + 100).replace(/\0/g, "");
@@ -96,6 +96,27 @@ async function extract(buffer, destPath) {
   return false;
 }
 
+function extractZip(buffer, destPath) {
+  const tmpDir = path.join(__dirname, ".tmp-extract");
+  const tmpZip = path.join(tmpDir, "archive.zip");
+  try {
+    fs.mkdirSync(tmpDir, { recursive: true });
+    fs.writeFileSync(tmpZip, buffer);
+    execSync(`powershell -Command "Expand-Archive -Path '${tmpZip}' -DestinationPath '${tmpDir}' -Force"`, { stdio: "pipe" });
+    
+    // Find the .exe file
+    const files = fs.readdirSync(tmpDir);
+    const exe = files.find(f => f.endsWith(".exe"));
+    if (exe) {
+      fs.copyFileSync(path.join(tmpDir, exe), destPath);
+      return true;
+    }
+    return false;
+  } finally {
+    try { fs.rmSync(tmpDir, { recursive: true, force: true }); } catch {}
+  }
+}
+
 async function main() {
   const target = getTarget();
   const url = getDownloadUrl(target);
@@ -114,7 +135,13 @@ async function main() {
   try {
     fs.mkdirSync(binDir, { recursive: true });
     const buffer = await download(url);
-    const extracted = await extract(buffer, binPath);
+
+    let extracted;
+    if (process.platform === "win32") {
+      extracted = extractZip(buffer, binPath);
+    } else {
+      extracted = extractTarGz(buffer, binPath);
+    }
 
     if (extracted) {
       console.log(`mimo-tui: installed to ${binPath}`);
